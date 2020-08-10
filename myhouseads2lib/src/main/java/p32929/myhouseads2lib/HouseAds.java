@@ -42,6 +42,7 @@ public class HouseAds {
     private RecyclerView.Adapter adapter;
     private LinearLayoutManager linearLayoutManager;
     private LinearLayout linearLayout;
+    private InterListener listener;
     private int bannerCount = 0;
     private MyAdView currentAdView;
     boolean shuffleDialogAds = false;
@@ -49,6 +50,7 @@ public class HouseAds {
 
     public HouseAds(final Context context, String url) {
         this.context = context;
+        FayazSP.init(context);
 
         new JsonObjectGetter(context, url, new JsonObjectGetListener() {
             @Override
@@ -99,6 +101,15 @@ public class HouseAds {
         incrementAndSaveCounter();
     }
 
+    public void putBannerAds(LinearLayout linearLayoutAds) {
+        this.linearLayout = linearLayoutAds;
+        currentAdView = new MyAdView(context, adArrayList.get(bannerCount));
+        if (linearLayout != null)
+            linearLayout.addView(currentAdView);
+
+        incrementAndSaveCounter();
+    }
+
     private void incrementAndSaveCounter() {
         bannerCount++;
         if (bannerCount == adArrayList.size()) {
@@ -131,6 +142,10 @@ public class HouseAds {
         }
     }
 
+    public void setListener(InterListener listener) {
+        this.listener = listener;
+    }
+
     public void setFeedbackEmail(String feedbackEmail) {
         this.feedbackEmail = feedbackEmail;
     }
@@ -149,6 +164,7 @@ public class HouseAds {
         recyclerView.setLayoutManager(linearLayoutManager);
         adapter = new RecyclerviewAdapter(adArrayList, context);
         recyclerView.setAdapter(adapter);
+        LinearLayout linearLayoutAboveList = view.findViewById(R.id.layoutAboveList);
 
         String title = adArrayList.size() == 0 ? "THANK YOU" : "RECOMMENDED APPS";
 
@@ -187,9 +203,14 @@ public class HouseAds {
         }
 
         dialog.show();
+
+        if (listener != null) {
+            linearLayoutAboveList.removeAllViews();
+            listener.onShow(linearLayoutAboveList);
+        }
     }
 
-    private void shareApp() {
+    public void shareApp() {
         Intent sendIntent = new Intent();
         sendIntent.setAction(Intent.ACTION_SEND);
         sendIntent.putExtra(Intent.EXTRA_TEXT, sharePreString + "https://play.google.com/store/apps/details?id=" + context.getPackageName());
